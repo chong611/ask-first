@@ -1,0 +1,20 @@
+# Files that go into the public repo (Q152). tools/publish_public.py copies them,
+# then replaces any file that has a version under public/overlay/. Nothing else is
+# published. tools/check.py keeps these files free of personal markers.
+.github/**
+.gitignore
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+README.md
+SECURITY.md
+VERSION
+adapters/**
+dist/**
+evidence/live/full-84-review.md
+docs/CAPABILITIES.md
+docs/ENFORCEMENT.md
+hooks/**
+src/**
+tests/**
+tools/**

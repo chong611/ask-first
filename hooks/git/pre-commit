@@ -1,0 +1,8 @@
+#!/bin/sh
+# Blocks commits that contain secret-like strings or leave dist/ stale.
+# Install: git config core.hooksPath hooks/git
+# python3 is a Microsoft Store stub on many Windows PCs; use python there.
+PY=python3
+command -v python3 >/dev/null 2>&1 && python3 -c "" 2>/dev/null || PY=python
+$PY tools/secret_scan.py || exit 1
+$PY tools/build.py --check || exit 1

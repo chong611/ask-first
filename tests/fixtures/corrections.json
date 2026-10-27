@@ -1,0 +1,383 @@
+[
+ {
+  "id": "G1-C1",
+  "rule": "3.3",
+  "check": "live",
+  "summary": "changed things before reading the whole backup"
+ },
+ {
+  "id": "G1-C2",
+  "rule": "3.6",
+  "check": "live",
+  "summary": "did the task but raised no advisor-level risks (a service left open to anyone)"
+ },
+ {
+  "id": "G1-C3",
+  "rule": "1.2",
+  "check": "live",
+  "summary": "earlier change silently removed a pipeline step"
+ },
+ {
+  "id": "G1-C4",
+  "rule": "4.5",
+  "check": "live",
+  "summary": "steps put in a local file the user could not open"
+ },
+ {
+  "id": "G1-C5",
+  "rule": "4.5",
+  "check": "live",
+  "summary": "assumed a visual widget rendered"
+ },
+ {
+  "id": "G1-C6",
+  "rule": "4.3",
+  "check": "grader",
+  "summary": "setup notes too technical for the reader"
+ },
+ {
+  "id": "G1-C7",
+  "rule": "1.1",
+  "check": "grader",
+  "summary": "reported fixed, user saw otherwise"
+ },
+ {
+  "id": "G1-C8",
+  "rule": "1.1",
+  "check": "grader",
+  "summary": "health claim without proof"
+ },
+ {
+  "id": "G1-C9",
+  "rule": "3.2",
+  "check": "live",
+  "summary": "fix did not stop recurrence"
+ },
+ {
+  "id": "G1-C10",
+  "rule": "2.4",
+  "check": "live",
+  "summary": "had API access but sent the user to do it; reported issues piecemeal"
+ },
+ {
+  "id": "G1-C11",
+  "rule": "1.3",
+  "check": "grader",
+  "summary": "end-of-task summary missed a finished item"
+ },
+ {
+  "id": "G1-C12",
+  "rule": "4.3",
+  "check": "grader",
+  "summary": "automated output had no explanation"
+ },
+ {
+  "id": "G1-C13",
+  "rule": "1.7",
+  "check": "live",
+  "summary": "delivered skill not actually used downstream"
+ },
+ {
+  "id": "G1-C14",
+  "rule": "2.1",
+  "check": "live",
+  "summary": "assumed scope (integrate with another project) without asking"
+ },
+ {
+  "id": "G1-C15",
+  "rule": "1.7",
+  "check": "grader",
+  "summary": "shallow how-to guide"
+ },
+ {
+  "id": "G1-C16",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "sampled one item instead of checking all"
+ },
+ {
+  "id": "G1-C17",
+  "rule": "1.1",
+  "check": "hook-deferral",
+  "summary": "proposed moving acceptance to tomorrow without a blocker",
+  "input": "时间不够了，明天再做最后检查。",
+  "expect": "detected"
+ },
+ {
+  "id": "G1-C18",
+  "rule": "2.4",
+  "check": "live",
+  "summary": "did not use access the user had already granted"
+ },
+ {
+  "id": "G1-C19",
+  "rule": "2.1",
+  "check": "grader",
+  "summary": "v2 only a small tweak of v1"
+ },
+ {
+  "id": "G1-C20",
+  "rule": "4.3",
+  "check": "grader",
+  "summary": "unexplained metric (a bare percentage-point change)"
+ },
+ {
+  "id": "G1-C21",
+  "rule": "2.4",
+  "check": "live",
+  "summary": "asked again for a key already given"
+ },
+ {
+  "id": "G1-C22",
+  "rule": "1.4",
+  "check": "live",
+  "summary": "a noise-reduction change was not tested and made the noise worse"
+ },
+ {
+  "id": "G1-C23",
+  "rule": "2.1",
+  "check": "live",
+  "summary": "stopped to ask about an obvious fix (over-asking)"
+ },
+ {
+  "id": "G1-C24",
+  "rule": "4.3",
+  "check": "grader",
+  "summary": "unexplained term"
+ },
+ {
+  "id": "G1-C25",
+  "rule": "2.1",
+  "check": "live",
+  "summary": "downgraded spec (2D) without asking"
+ },
+ {
+  "id": "G1-C26",
+  "rule": "3.4",
+  "check": "grader",
+  "summary": "plan missed the end user's perspective"
+ },
+ {
+  "id": "G1-C27",
+  "rule": "2.2",
+  "check": "live",
+  "summary": "asked too few questions, pushed own default"
+ },
+ {
+  "id": "G1-C28",
+  "rule": "3.1",
+  "check": "grader",
+  "summary": "delivery standard raised to implementable"
+ },
+ {
+  "id": "G1-C29",
+  "rule": "4.2",
+  "check": "grader",
+  "summary": "long, evasive answer"
+ },
+ {
+  "id": "G1-C30",
+  "rule": "1.4",
+  "check": "live",
+  "summary": "claimed full backup without proof"
+ },
+ {
+  "id": "G1-C31",
+  "rule": "1.4",
+  "check": "live",
+  "summary": "health check measured liveness, not delivery (fake green)"
+ },
+ {
+  "id": "G2-C1",
+  "rule": "4.6",
+  "check": "grader",
+  "summary": "status write-up cluttered and hard to read"
+ },
+ {
+  "id": "G2-C2",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "outputs not saved; fix not applied to the whole class"
+ },
+ {
+  "id": "G2-C3",
+  "rule": "1.4",
+  "check": "grader",
+  "summary": "config read back presented as fixed"
+ },
+ {
+  "id": "G2-C4",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "changed new rows only, not existing ones"
+ },
+ {
+  "id": "G2-C5",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "left empty rows in place"
+ },
+ {
+  "id": "G2-C6",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "did one sheet of five"
+ },
+ {
+  "id": "G2-C7",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "still had not deleted the rows (third request)"
+ },
+ {
+  "id": "G2-C8",
+  "rule": "1.4",
+  "check": "live",
+  "summary": "production script handed over without proof"
+ },
+ {
+  "id": "G2-C9",
+  "rule": "1.4",
+  "check": "live",
+  "summary": "same, again"
+ },
+ {
+  "id": "G2-C10",
+  "rule": "1.4",
+  "check": "live",
+  "summary": "repair script wrote only 2 columns"
+ },
+ {
+  "id": "G2-C11",
+  "rule": "3.2",
+  "check": "live",
+  "summary": "patches instead of method; stale integrity baseline"
+ },
+ {
+  "id": "G2-C12",
+  "rule": "1.1",
+  "check": "grader",
+  "summary": "answers before proof"
+ },
+ {
+  "id": "G2-C13",
+  "rule": "1.4",
+  "check": "live",
+  "summary": "validator shared the agent's wrong scope"
+ },
+ {
+  "id": "G2-C14",
+  "rule": "1.1",
+  "check": "grader",
+  "summary": "earlier assertions overreached"
+ },
+ {
+  "id": "G2-C15",
+  "rule": "1.5",
+  "check": "live",
+  "summary": "checked the arithmetic, missed that the source data was already out of date"
+ },
+ {
+  "id": "G2-C16",
+  "rule": "1.7",
+  "check": "live",
+  "summary": "delivered tool ignored the decision-log contract"
+ },
+ {
+  "id": "G2-C17",
+  "rule": "1.1",
+  "check": "hook-deferral",
+  "summary": "queued two small items as not urgent today and asked which to do",
+  "input": "这两个小改动先排队，不急今天处理，你挑一个。",
+  "expect": "detected"
+ },
+ {
+  "id": "G2-C18",
+  "rule": "1.7",
+  "check": "grader",
+  "summary": "delivered tool gave shallow answers"
+ },
+ {
+  "id": "G2-C19",
+  "rule": "1.1",
+  "check": "hook-deferral",
+  "summary": "deferred an investigation (will give a plan then)",
+  "input": "原因还没查清，到时候再出修复方案。",
+  "expect": "detected"
+ },
+ {
+  "id": "G2-C20",
+  "rule": "2.1",
+  "check": "live",
+  "summary": "recited the rules but did not start"
+ },
+ {
+  "id": "G2-C21",
+  "rule": "1.1",
+  "check": "hook-deferral",
+  "summary": "parked two known defects for next time",
+  "input": "这两个缺陷先不修，等下次一起看。",
+  "expect": "detected"
+ },
+ {
+  "id": "G2-C22",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "offered a menu instead of finishing"
+ },
+ {
+  "id": "G2-C23",
+  "rule": "4.6",
+  "check": "grader",
+  "summary": "added a second table without a stated reason"
+ },
+ {
+  "id": "G2-C24",
+  "rule": "3.5",
+  "check": "live",
+  "summary": "promised a patch, never delivered it"
+ },
+ {
+  "id": "G2-C25",
+  "rule": "3.5",
+  "check": "live",
+  "summary": "left deletion steps and pending confirmations unanswered"
+ },
+ {
+  "id": "G2-C26",
+  "rule": "3.1",
+  "check": "live",
+  "summary": "long investigation, no deliverable"
+ },
+ {
+  "id": "G2-C27",
+  "rule": "4.1",
+  "check": "grader",
+  "summary": "replied in a different language from the one the user prefers"
+ },
+ {
+  "id": "G2-C28",
+  "rule": "1.7",
+  "check": "grader",
+  "summary": "generic documentation-style answer"
+ },
+ {
+  "id": "G2-C29",
+  "rule": "2.1",
+  "check": "live",
+  "summary": "read two tools as one"
+ },
+ {
+  "id": "G2-C30",
+  "rule": "1.7",
+  "check": "live",
+  "summary": "designed an auto-backup that would never run"
+ },
+ {
+  "id": "L-20261025-ask",
+  "rule": "2.2",
+  "check": "hook-ask",
+  "summary": "left a decision as a session card plus a 等你决定 line instead of asking; the user asked to be given the choice as a question",
+  "input": "**完成（1）**\n- 修好登录页的错别字\n**未完成（0）**\n**未验证（0）**\n**发现未修（1）**\n- 构建时间偏长\n**等你决定（1）**\n- 要不要开一个任务查构建时间"
+ }
+]

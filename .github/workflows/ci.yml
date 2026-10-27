@@ -1,0 +1,30 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: windows-latest   # Windows with Windows PowerShell 5.1, a supported platform
+            python: "3.13"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python tools/check.py
+      # A file opened without encoding= is UTF-8 on Linux but cp1252 on Windows: fail it everywhere.
+      - run: python -X warn_default_encoding -W error::EncodingWarning -m unittest discover -s tests -v
+      - name: Install, check and uninstall in a throwaway home
+        shell: bash
+        run: |
+          set -e
+          H="$RUNNER_TEMP/pbhome"
+          python tools/install.py global --home "$H" --profile lang-zh-CN --yes
+          python tools/install.py global --home "$H" | grep -q "already up to date"
+          python tools/install.py uninstall global --home "$H" --yes
+          test ! -e "$H/.claude/rules/agent-playbook.md"

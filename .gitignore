@@ -1,0 +1,8 @@
+# Private owner profile: user scope only, never committed (DECISIONS Q-owner).
+src/profiles/owner.md
+__pycache__/
+*.pyc
+# Personal-info deny-list for tools/secret_scan.py and tools/check.py (DECISIONS Q46).
+private/
+# Run output of tools/compare.py (its default --out).
+results/
