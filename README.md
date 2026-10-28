@@ -2,6 +2,8 @@
 
 Rules for coding agents that ask before risky actions, and the tools to measure whether those rules actually work. The installed package is called `agent-playbook`. Version: see `VERSION` and `CHANGELOG.md`.
 
+Works with Claude Code (live-tested). Codex, Cursor, Gemini CLI and DeepSeek (through Claude Code) are supported and unit-tested, not yet live-tested: see [Supported agents](#supported-agents).
+
 Most rule sets (CLAUDE.md, AGENTS.md, skill packs) are prose that the model may or may not follow. This repo does three things:
 
 1. **One source, generated entry files.** Rules live once in `src/`. `tools/build.py` writes the files each agent reads. CI fails if the generated files drift from the source.
@@ -36,7 +38,7 @@ One policy core; a thin adapter per agent translates its hook events (`src/hooks
 
 ## 中文说明
 
-- **做什么**：让装了它的地方（你的电脑，或某个云端环境）里每个 Claude Code 会话都照同一套规矩做事：
+- **做什么**：让装了它的地方（你的电脑，或某个云端环境）里的 AI 编程工具都照同一套规矩做事。支持 Claude Code（已实测）和 Codex、Cursor、Gemini、DeepSeek（已支持，还没实测）：
   - 有证据才说"完成"；
   - 改了东西，用五个标题汇报；
   - 删数据、强推、发 PR 之前先问你；
@@ -67,7 +69,7 @@ One policy core; a thin adapter per agent translates its hook events (`src/hooks
 | `docs/` | Capability map and enforcement table |
 | `evidence/live/` | The with/without measurement above |
 
-## Use (Claude Code)
+## Use
 
 Every command first prints a diff and writes nothing. Re-run it with `--yes` to apply.
 
@@ -79,6 +81,18 @@ python tools/install.py project PATH --cloud   # a repo used in cloud sessions; 
 python tools/install.py check PATH             # project core and global core must be byte-identical
 python tools/install.py uninstall global       # remove what the global install added (PATH for a repo; --purge: logs too)
 ```
+
+### Other agents
+
+See the table above for what each one enforces.
+
+```sh
+python tools/install.py global --client codex             # also cursor or gemini; prints a diff, add --yes
+python tools/install.py uninstall global --client codex   # remove it again
+python tools/deepseek.py                                  # Claude Code on DeepSeek; the key is typed in, never stored
+```
+
+After installing, do the one manual step the installer prints (for example, trust the hooks with `/hooks` in Codex).
 
 Existing CLAUDE.md, AGENTS.md and settings are merged, never replaced. Each changed file is backed up.
 
