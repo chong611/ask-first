@@ -40,8 +40,9 @@ def always_on_bytes(paths: list[Path]) -> int:
 
 
 def owner_candidates() -> list[Path]:
-    """Where a personal profile may live on this machine; the first one present is counted."""
-    return [build.SRC / "profiles" / "owner.md", Path.home() / ".claude" / "rules" / "owner.md"]
+    """Where a personal profile may live on this machine; the first one present is counted. The live file
+    comes first: the old copy in src/profiles (before Q155) can be stale and hid an over-budget profile."""
+    return [Path.home() / ".claude" / "rules" / "owner.md", build.SRC / "profiles" / "owner.md"]
 
 
 def budget_paths(owners: list[Path] | None = None) -> list[Path]:

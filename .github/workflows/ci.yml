@@ -28,3 +28,10 @@ jobs:
           python tools/install.py global --home "$H" | grep -q "already up to date"
           python tools/install.py uninstall global --home "$H" --yes
           test ! -e "$H/.claude/rules/agent-playbook.md"
+          for c in codex cursor gemini; do
+            python tools/install.py global --client "$c" --home "$H" --yes
+            python tools/install.py global --client "$c" --home "$H" | grep -q "already up to date"
+            python tools/install.py uninstall global --client "$c" --home "$H" --yes
+          done
+          test ! -e "$H/.codex/agent-playbook" && test ! -e "$H/.cursor/agent-playbook"
+          test ! -e "$H/.gemini/extensions/agent-playbook"

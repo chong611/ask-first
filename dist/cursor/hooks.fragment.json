@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "{COMMAND}",
+        "timeout": 15,
+        "failClosed": true
+      }
+    ],
+    "beforeMCPExecution": [
+      {
+        "command": "{COMMAND}",
+        "timeout": 15,
+        "failClosed": true
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "{COMMAND}",
+        "matcher": "^(Read|Write|Edit|StrReplace|MultiEdit|ApplyPatch|Delete)$",
+        "timeout": 15,
+        "failClosed": true
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "{COMMAND}",
+        "matcher": "^(Shell|Write|Edit|StrReplace|MultiEdit|ApplyPatch|Delete)$|^MCP:",
+        "timeout": 10
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "{COMMAND}",
+        "timeout": 10
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "{COMMAND}",
+        "timeout": 10
+      }
+    ],
+    "stop": [
+      {
+        "command": "{COMMAND}",
+        "timeout": 15,
+        "loop_limit": 5
+      }
+    ]
+  }
+}

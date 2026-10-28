@@ -25,13 +25,18 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import policy  # noqa: E402
-import report  # noqa: E402
+try:  # a broken policy or report file must still end in fail_closed(), not in a crash the client lets through
+    import policy  # noqa: E402
+    import report  # noqa: E402
+    IMPORT_ERROR: BaseException | None = None
+except BaseException as exc:  # noqa: BLE001
+    IMPORT_ERROR = exc
 
 HOME = Path(os.environ.get("AGENT_PLAYBOOK_HOME", Path.home() / ".claude" / "agent-playbook"))
 READ_ONLY_NAMES = {"ls", "cat", "head", "tail", "wc", "grep", "rg", "pwd", "echo", "which", "file", "stat", "du",
@@ -151,8 +156,50 @@ def strings(value) -> list[str]:
     return [s for v in items for s in strings(v)]
 
 
+# --client NAME loads client_NAME.py, which translates another agent's events to Claude Code's
+# shape (normalize) and our Claude-shaped answers back (render). Without --client: Claude Code.
+CLIENT = None
+CLIENT_CAN_ASK = True  # False: the client has no approval prompt, so "ask" becomes an approval code
+OUTPUTS: list[dict] = []
+
+
 def emit(obj: dict) -> None:
+    if CLIENT is not None:
+        OUTPUTS.append(obj)
+        return
     sys.stdout.write(json.dumps(obj, ensure_ascii=True) + "\n")
+
+
+# Clients that cannot show an approval prompt get a one-time code instead: the call is denied with
+# the code, the agent asks the user in chat, and only the user's own next message ("approve K7Q2" or
+# "批准 K7Q2", seen by UserPromptSubmit) lets that exact call through once.
+APPROVE = re.compile(r"(?:approve|批准)\s*([A-Z0-9]{4})\b", re.I)
+CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def call_key(tool: str, tool_input: dict) -> str:
+    import hashlib
+    blob = json.dumps([tool, tool_input], sort_keys=True, ensure_ascii=True, default=str)
+    return hashlib.sha256(blob.encode()).hexdigest()[:16]
+
+
+def approval_code(sid: str, tool: str, tool_input: dict) -> str | None:
+    """None when the user already approved this exact call (consumed now); otherwise its code."""
+    import secrets
+    state = load_state(sid)
+    key = call_key(tool, tool_input)
+    if key in state.get("approved", []):
+        state["approved"].remove(key)
+        save_state(sid, state)
+        return None
+    pending = state.setdefault("pending", {})
+    code = next((c for c, k in pending.items() if k == key), None)
+    if code is None:
+        code = "".join(secrets.choice(CODE_CHARS) for _ in range(4))
+        pending[code] = key
+        state["pending"] = dict(list(pending.items())[-20:])
+        save_state(sid, state)
+    return code
 
 
 # --- events --------------------------------------------------------------------
@@ -201,6 +248,13 @@ def on_pre_tool_use(event: dict) -> None:
         if mode in NO_PROMPT_MODES:  # these modes approve an "ask" silently, so the only safe answer is no
             deny(reason + f". This session runs in {mode} mode, which shows no approval prompt. Tell the user; "
                  "they can switch to Manual or Auto mode to approve it, or run it themselves.")
+        elif not CLIENT_CAN_ASK:
+            code = approval_code(sid, tool, tool_input)
+            if code is None:
+                log("tier2-approved", {"session": sid, "tool": tool, "client": CLIENT})
+                return
+            deny(reason + f". This agent cannot show an approval prompt. Ask the user, naming the exact action; "
+                 f"if they reply \"approve {code}\" (or \"批准 {code}\"), retry the identical call once.")
         else:
             ask(reason)
     elif tool in ("Bash", "PowerShell") and (advice := report.pipe_hides_exit(str(tool_input.get("command", "")))):
@@ -232,6 +286,10 @@ def on_user_prompt_submit(event: dict) -> None:
     state["ps_reminded"] = False
     state["asked_this_turn"] = False
     state["asked_ids"] = []
+    pending = state.get("pending", {})
+    for code in APPROVE.findall(str(event.get("prompt") or "")):
+        if code.upper() in pending:
+            state["approved"] = (state.get("approved", []) + [pending.pop(code.upper())])[-20:]
     save_state(sid, state)
 
 
@@ -323,14 +381,134 @@ HANDLERS = {
 }
 
 
-def main() -> int:
-    raw = sys.stdin.buffer.read()
+def main(argv: list[str] | None = None) -> int:
+    global CLIENT, CLIENT_CAN_ASK
+    argv = sys.argv[1:] if argv is None else argv
+    if "--client" in argv[:-1]:
+        CLIENT = argv[argv.index("--client") + 1]
+    if IMPORT_ERROR is not None:
+        raise IMPORT_ERROR
+    if CLIENT is not None:
+        import importlib
+        adapter = importlib.import_module(f"client_{CLIENT}")
+        CLIENT_CAN_ASK = adapter.CAN_ASK
+        OUTPUTS.clear()
+        code = run()
+        text, code = adapter.render(LAST_EVENT, OUTPUTS, LAST_RAW)
+        write_once(text)
+        return code
+    return run()
+
+
+# --- failing closed ------------------------------------------------------------------------------
+# Codex and Gemini CLI let a tool call through when its hook crashes or times out. So a crash
+# anywhere (even a broken policy.py or adapter) and a check about to run past the client's
+# timeout both answer "deny" before-tool, in a form each client honours without our adapters.
+
+BEFORE_TOOL = {"PreToolUse", "BeforeTool", "beforeShellExecution", "beforeMCPExecution", "preToolUse",
+               "beforeReadFile"}
+_DONE = threading.Event()
+_LOCK = threading.Lock()
+RAW_BYTES: bytes | None = None
+
+
+def write_once(text: str) -> bool:
+    """Print the answer unless the deadline already printed one; True if this call printed."""
+    with _LOCK:
+        if _DONE.is_set():
+            return False
+        _DONE.set()
+        if text:
+            sys.stdout.write(text if text.endswith("\n") else text + "\n")
+            sys.stdout.flush()
+        return True
+
+
+def fallback(event_name: str, reason: str) -> tuple[str, int]:
+    """The client's own deny for a before-tool event; for any other event, nothing to say."""
+    if event_name not in BEFORE_TOOL:
+        return ("{}" if CLIENT in ("codex", "gemini", "cursor") else ""), 0
+    reason = "agent-playbook rule 2.3: " + reason
+    if CLIENT == "gemini":  # exit 2 denies even if the JSON is not read
+        return json.dumps({"decision": "deny", "reason": reason, "systemMessage": reason}), 2
+    if CLIENT == "cursor":  # exit 2 denies
+        return json.dumps({"permission": "deny", "user_message": reason, "agent_message": reason}), 2
+    decision = "deny" if CLIENT == "codex" else "ask"  # Claude Code can still ask the user
+    return json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": decision,
+                                              "permissionDecisionReason": reason}}), 0
+
+
+def decode(raw: bytes) -> str:
+    """PowerShell 5.1 pipes add a BOM, and Cursor's preamble can add a second one."""
+    return raw.decode("utf-8", errors="replace").lstrip("﻿")
+
+
+def raw_event_name() -> str:
+    global RAW_BYTES
+    if RAW_BYTES is None:
+        try:
+            RAW_BYTES = sys.stdin.buffer.read()
+        except (OSError, ValueError):
+            RAW_BYTES = b""
     try:
-        event = json.loads(raw.decode("utf-8-sig", errors="replace") or "null")  # PowerShell 5.1 pipes add a BOM
+        name = json.loads(decode(RAW_BYTES) or "null").get("hook_event_name")
+    except (ValueError, AttributeError):
+        return ""
+    return name if isinstance(name, str) else ""
+
+
+def fail_closed(exc: BaseException) -> int:
+    name = raw_event_name()
+    text, code = fallback(name, f"the policy hook failed ({type(exc).__name__}), so it cannot vouch for this call. "
+                                "Retry once; if it fails again, tell the user.")
+    try:
+        sys.stderr.write(f"agent-playbook hook error: {type(exc).__name__}: {exc}"[:500] + "\n")
+    except (OSError, ValueError):
+        pass
+    return code if write_once(text) else 0
+
+
+def start_deadline(seconds: float, event_name: str) -> None:
+    """Answer the client's deny just before its own timeout would let the call through."""
+    def fire():
+        text, code = fallback(event_name, f"the policy check took longer than {seconds:g}s, so it cannot vouch "
+                                          "for this call. Retry once; if it happens again, tell the user.")
+        if write_once(text):
+            os._exit(code)
+    timer = threading.Timer(seconds, fire)
+    timer.daemon = True
+    timer.start()
+
+
+LAST_EVENT: dict | None = None  # the Claude-shaped event run() handled, for the client's render()
+LAST_RAW: dict | None = None
+
+
+def run() -> int:
+    global LAST_EVENT, LAST_RAW, CLIENT_CAN_ASK, RAW_BYTES
+    raw = RAW_BYTES = sys.stdin.buffer.read()
+    try:
+        event = json.loads(decode(raw) or "null")
     except ValueError:
         return 0
     if not isinstance(event, dict):
         return 0
+    if CLIENT is None and ("cursor_version" in event or "workspace_roots" in event):
+        sys.stdout.write("{}\n")  # Cursor importing our Claude Code hooks: its own --client cursor hooks decide
+        return 0
+    if CLIENT is not None:
+        import importlib
+        adapter = importlib.import_module(f"client_{CLIENT}")
+        LAST_RAW = event
+        deadline = getattr(adapter, "DEADLINE", None)  # seconds, a margin below the client's hook timeout
+        if deadline and event.get("hook_event_name") in BEFORE_TOOL:
+            start_deadline(deadline, str(event.get("hook_event_name")))
+        if hasattr(adapter, "can_ask"):  # some clients can prompt for some tools only
+            CLIENT_CAN_ASK = bool(adapter.can_ask(event))
+        event = adapter.normalize(event)
+        if not isinstance(event, dict):
+            return 0
+        LAST_EVENT = event
     if not isinstance(event.get("cwd"), str) or not os.path.isdir(event["cwd"]):
         event["cwd"] = os.getcwd()
     name = event.get("hook_event_name")
@@ -350,4 +528,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except BaseException as exc:  # noqa: BLE001 - anything else fails closed (see fail_closed)
+        sys.exit(fail_closed(exc))

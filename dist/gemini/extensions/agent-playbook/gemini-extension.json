@@ -1,0 +1,6 @@
+{
+  "name": "agent-playbook",
+  "version": "1.1.1",
+  "description": "agent-playbook: working rules, tier-2 approval and the end-of-turn report check",
+  "contextFileName": "GEMINI.md"
+}

@@ -340,6 +340,11 @@ def apply(plan: dict[Path, str]) -> list[Path]:
             changed.append(path)
             continue
         path.parent.mkdir(parents=True, exist_ok=True)
+        newline = None  # a new file: the platform's line endings, as before
+        if old is not None:  # keep the user's own line endings (an LF config.toml stays LF on Windows)
+            newline = "\r\n" if b"\r\n" in path.read_bytes() else "\n"
+        if "\r\n" in new:  # the plan already chose the line endings (target_codex keeps a CRLF config.toml)
+            newline = ""
         if old is not None:  # timestamped, so an older backup (e.g. the original) is never overwritten
             stamp = time.strftime("%Y%m%d-%H%M%S")
             backup = path.with_name(f"{path.name}.bak-agent-playbook-{stamp}")
@@ -349,14 +354,15 @@ def apply(plan: dict[Path, str]) -> list[Path]:
                 n += 1
             shutil.copy2(path, backup)
             trim_backups(path)
-        path.write_text(new, encoding="utf-8")
+        path.write_text(new, encoding="utf-8", newline=newline)
         changed.append(path)
     return changed
 
 
 def remove_empty_dirs(folder: Path) -> None:
     """Remove folders we emptied (a skill folder, hooks/agent-playbook), never ~/.claude itself."""
-    while folder.name not in (".claude", "") and folder.exists() and not any(folder.iterdir()):
+    while folder.name not in (".claude", ".codex", ".cursor", ".gemini", ".agents", "") and folder.exists() \
+            and not any(folder.iterdir()):
         folder.rmdir()
         folder = folder.parent
 
@@ -397,6 +403,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--profile", action="append", choices=build.PUBLIC_PROFILES,
                         help="global: add an optional profile (repeatable); later updates keep it")
     parser.add_argument("--no-profiles", action="store_true", help="global: remove the optional profiles")
+    parser.add_argument("--client", choices=("claude", *build.CLIENTS), default="claude",
+                        help="global/uninstall global: which agent to install for (default: claude)")
     parser.add_argument("--home", default=os.path.expanduser("~"), help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     try:  # a non-UTF-8 console (common on Windows) must not crash on Chinese text in a diff
@@ -410,7 +418,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.target == "check":
         return check(repo, home)
     notes: list[str] = []
-    if args.target == "uninstall":
+    if args.client != "claude":
+        if args.target not in ("global", "uninstall") or (args.target == "uninstall" and args.path != "global"):
+            print(f"--client {args.client} supports only: global, uninstall global", file=sys.stderr)
+            return 2
+        tgt = build.target(args.client)
+        if args.target == "uninstall":
+            plan, notes = tgt.plan_uninstall(home)
+        else:
+            own = getattr(tgt, "installed_profiles", None)  # what this client got last time, if it records it
+            last = own(home) if own else None  # None: never installed for this client
+            profiles = [] if args.no_profiles else (args.profile or (last if last is not None
+                                                                     else installed_profiles(home)))
+            plan = tgt.plan_global(home, build.outputs(), Path(sys.executable).as_posix(), profiles)
+            notes = tgt.notes()
+    elif args.target == "uninstall":
         plan, notes = plan_uninstall(home, None if args.path == "global" else repo, args.purge)
     else:
         profiles = [] if args.no_profiles else args.profile

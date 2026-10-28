@@ -972,7 +972,9 @@ def ps_reading(cmdlet: str, args: list[str], ctx: Context, piped: list[str] | No
 
 # Names that matter when a file lands in a folder: what SELF_INSTRUCTION looks for, and any .md (memory/x.md).
 PLACED_NAME = re.compile(r"^(\.claude|\.agent-playbook|claude\.local\.md|\.claude\.json|\.mcp\.json|settings(\.local)?"
-                         r"\.json.*|rules|skills|hooks|agents|commands|output-styles|agent-playbook|memory|[^/]*\.md)$",
+                         r"\.json.*|rules|skills|hooks|agents|commands|output-styles|agent-playbook|memory|[^/]*\.md"
+                         r"|\.codex|\.cursor|\.gemini|\.agents|policies|extensions|plugins|hooks\.json|config\.toml"
+                         r"|cli-config\.json|cli\.json|permissions\.json|system-defaults\.json)$",
                          re.I)
 
 
@@ -1072,10 +1074,21 @@ def file_writes(cmd: list[str], ctx: Context, piped: list[str] | None = None) ->
 
 # --- self-instruction and secret files -----------------------------------------------------
 
+# One shared "(^|/)" prefix, then the names: matching tries the alternatives only at a path start or
+# after a slash, which keeps long commands with many paths fast (test_many_folders_and_copies_stay_fast).
 SELF_INSTRUCTION = re.compile(
-    r"(^|/)(claude\.md|agents\.md|claude\.local\.md|memory\.md|\.claude\.json|\.mcp\.json)$"
-    r"|(^|/)\.claude/(settings(\.local)?\.json|rules/|skills/|hooks/|agents/|commands/|output-styles/)"
-    r"|(^|/)\.claude/agent-playbook/|(^|/)\.agent-playbook/|(^|/)\.claude/plugins/|/memory/[^/]+\.md$", re.I)
+    r"(?:^|/)(?:"
+    r"(?:claude\.md|agents\.md|claude\.local\.md|memory\.md|\.claude\.json|\.mcp\.json)$"
+    r"|\.claude/(?:settings(?:\.local)?\.json|rules/|skills/|hooks/|agents/|commands/|output-styles/|agent-playbook/"
+    r"|plugins/)"
+    r"|\.agent-playbook/|memory/[^/]+\.md$"
+    # the other agents' instructions, hooks, rules and skills (client_codex, client_cursor, client_gemini)
+    r"|(?:agents\.override\.md|gemini\.md)$|\.agents/skills/"
+    r"|\.codex/(?:hooks\.json|config\.toml|rules/|skills/|agent-playbook/)"
+    r"|\.cursor/(?:hooks\.json|hooks/|rules/|plugins/|skills/|skills-cursor/|agents/|commands/|agent-playbook/"
+    r"|cli-config\.json|cli\.json|permissions\.json|mcp\.json)|\.cursor(?:rules|ignore)$|cursor/user/settings\.json$"
+    r"|\.gemini/(?:[^/]+\.json$|policies/|extensions/|commands/|skills/|agents/|hooks/)"
+    r"|gemini-?cli/(?:settings\.json|system-defaults\.json|policies/))", re.I)
 
 
 LESSONS_INBOX = re.compile(r"(^|/)\.claude/agent-playbook/lessons-inbox\.md$", re.I)
@@ -1090,7 +1103,7 @@ def ps_expand(path: str) -> str:
     return PS_ENV.sub(lambda m: os.environ.get(m.group(1), m.group(0)), path)
 
 
-CLAUDE_FOLDER = re.compile(r"(^|/)\.claude/?$", re.I)
+CLAUDE_FOLDER = re.compile(r"(^|/)\.(claude|codex|cursor|gemini|agents)/?$", re.I)
 def without_stream(path: str) -> str:
     """CLAUDE.md::$DATA and CLAUDE.md:x are streams of CLAUDE.md itself (NTFS); C: stays a drive."""
     head, sep, last = path.rpartition("/")
@@ -1101,7 +1114,9 @@ def without_stream(path: str) -> str:
 
 PROBE_NAMES = (".claude", ".agent-playbook", "rules", "skills", "hooks", "agents", "commands", "output-styles",
                "agent-playbook", "memory", "settings.json", "settings.local.json", "claude.md", "agents.md",
-               "claude.local.md", "memory.md", ".claude.json", ".mcp.json", "x.md", "x")
+               "claude.local.md", "memory.md", ".claude.json", ".mcp.json", "x.md", "x",
+               ".codex", ".cursor", ".gemini", ".agents", "agents.override.md", "gemini.md", "policies", "extensions",
+               "plugins", "hooks.json", "config.toml", "cli-config.json", "permissions.json")
 
 
 def could_name_instructions(pattern: str) -> bool:

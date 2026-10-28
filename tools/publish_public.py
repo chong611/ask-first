@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import os
 import re
 import shutil
 import subprocess
@@ -86,8 +87,12 @@ def verify(tree: Path) -> None:
         git("add", "-A", cwd=tree)
         git("-c", "user.name=stage", "-c", "user.email=stage@example.invalid",
             "commit", "-q", "-m", "stage", cwd=tree)
+    # an empty home: the public tree must pass on any machine, not only with the owner's personal profile
+    home = tempfile.mkdtemp()
+    env = {**os.environ, "HOME": home, "USERPROFILE": home}
     for cmd in ([sys.executable, "tools/check.py"], [sys.executable, "-m", "unittest", "discover", "-s", "tests"]):
-        run = subprocess.run(cmd, cwd=tree, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        run = subprocess.run(cmd, cwd=tree, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                             env=env)
         tail = (run.stdout + run.stderr).strip().splitlines()[-3:]
         print(f"{' '.join(cmd[1:])}: exit {run.returncode}; " + " | ".join(tail))
         if run.returncode:

@@ -16,6 +16,24 @@ Measured on the raw Claude API in an 84-run comparison (US$2.14 in all). With th
 
 Not measured yet: skill triggering, re-injection after compaction, and the with/without comparison inside Claude Code itself.
 
+## Supported agents
+
+One policy core; a thin adapter per agent translates its hook events (`src/hooks/client_<name>.py`) and installs its files (`tools/target_<name>.py`). Every adapter is unit-tested with payloads shaped from the agent's official docs. Only Claude Code has been live-tested so far.
+
+| Agent | Install | Rules | Risky actions (rule 2.3) | Report check (1.3) | Live-tested |
+|---|---|---|---|---|---|
+| Claude Code | `install.py global` | always on | hook asks the user | hook | yes |
+| Codex | `install.py global --client codex` | `~/.codex/AGENTS.md` | hook denies with a one-time approval code; prefix rules prompt | Stop hook | no |
+| Cursor | `install.py global --client cursor` | per project (`AGENTS.md`); global rules pasted once in settings | shell and MCP: asks (Allowlist mode); file tools: approval code | stop follow-up | no |
+| Gemini CLI | `install.py global --client gemini` | extension `GEMINI.md` | hook denies with an approval code; policy file asks | AfterAgent retry | no (needs a paid key) |
+| DeepSeek | `python tools/deepseek.py` | as Claude Code | as Claude Code (it runs Claude Code on DeepSeek's Anthropic-compatible API) | as Claude Code | no |
+
+**Approval code.** Where an agent cannot show an approval prompt, the hook denies the risky call with a four-character code. The agent asks you; if you reply `approve CODE` (or `批准 CODE`), that exact call goes through once. Only your own message counts.
+
+**Fail closed.** Codex and Gemini let a call through when a hook crashes or times out, so the hook denies before-tool calls on any internal error and answers before the agent's timeout.
+
+**DeepSeek.** Data you or the agent send is processed in the People's Republic of China (DeepSeek's privacy policy). Anthropic does not support Claude Code on non-Claude models, so an update may break it.
+
 ## 中文说明
 
 - **做什么**：让装了它的地方（你的电脑，或某个云端环境）里每个 Claude Code 会话都照同一套规矩做事：
@@ -31,6 +49,8 @@ Not measured yet: skill triggering, re-injection after compaction, and the with/
   1. 把 `tools/cloud-setup.sh` 的全部内容贴进云端环境设置里的 Setup script；
   2. 把这个 repo 加进该环境的 Repositories。
 - **卸载**：先运行 `python tools\install.py uninstall global` 看会删什么，再加 `--yes`。它只删它自己装的东西，你自己的设置会保留。
+- **其他 AI 工具**：在上面的命令后加 `--client codex`、`--client cursor` 或 `--client gemini`。装完按屏幕提示做一次手动步骤（例如在 Codex 里输入 `/hooks` 点信任）。这些工具不能弹窗时，AI 会给你一个 4 位批准码，你回复「批准 XXXX」才放行那一个操作。
+- **DeepSeek**：运行 `python tools\deepseek.py`，输入 DeepSeek 密钥（不保存）。数据会在中国境内处理，只用在不敏感的项目上。
 - **认出它的会话**：playbook 的会话标题以 `[playbook]` 开头。在别的项目里纠正 agent 时，它只会在 `~/.claude/agent-playbook/lessons-inbox.md` 记一笔，不会跑去改 playbook。
 
 ## Layout

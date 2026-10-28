@@ -1,0 +1,58 @@
+{
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "agent-playbook-before-tool",
+            "type": "command",
+            "command": "{PYTHON} \"${extensionPath}${/}hooks${/}playbook_hook.py\" --client gemini",
+            "timeout": 60000,
+            "description": "agent-playbook policy hook"
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "matcher": "^(run_shell_command|write_file|replace|save_memory)$|^mcp_",
+        "hooks": [
+          {
+            "name": "agent-playbook-after-tool",
+            "type": "command",
+            "command": "{PYTHON} \"${extensionPath}${/}hooks${/}playbook_hook.py\" --client gemini",
+            "timeout": 30000,
+            "description": "agent-playbook policy hook"
+          }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "name": "agent-playbook-before-agent",
+            "type": "command",
+            "command": "{PYTHON} \"${extensionPath}${/}hooks${/}playbook_hook.py\" --client gemini",
+            "timeout": 30000,
+            "description": "agent-playbook policy hook"
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "name": "agent-playbook-after-agent",
+            "type": "command",
+            "command": "{PYTHON} \"${extensionPath}${/}hooks${/}playbook_hook.py\" --client gemini",
+            "timeout": 30000,
+            "description": "agent-playbook policy hook"
+          }
+        ]
+      }
+    ]
+  }
+}

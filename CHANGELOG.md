@@ -5,7 +5,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions: [Sem
 
 ## [Unreleased]
 
-## [1.0.1] - 2026-10-27
+## [1.1.1] - 2026-10-28
+
+### Fixed
+- `check.py` counts the live personal profile (`~/.claude/rules/owner.md`) before the old copy in `src/profiles/`, which could be stale and hide an over-budget profile.
+- `publish_public.py` runs the public tree's checks with an empty home, so they never depend on the maintainer's personal profile.
+
+## [1.1.0] - 2026-10-28
+
+### Added
+- Other agents: Codex, Cursor and Gemini CLI, through `install.py global --client codex|cursor|gemini` and one adapter per agent (`src/hooks/client_<name>.py`, `tools/target_<name>.py`). Unit-tested with payloads shaped from each agent's docs; not yet live-tested.
+- Approval codes for agents that cannot show an approval prompt: the risky call is denied with a four-character code, and only the user's own `approve CODE` / `批准 CODE` lets that exact call through once.
+- `tools/deepseek.py`: starts Claude Code on DeepSeek's Anthropic-compatible API, so every hook still applies; the key is never stored.
+- `tools/publish_public.py` and `public/overlay/` build the public repo from the private one.
+
+### Changed
+- The policy treats Codex, Cursor and Gemini instruction, hook, rule and settings files like Claude Code's: changing them asks first.
+
+### Fixed
+- Fail closed: a crashed hook (a broken policy file or adapter included) or a check about to pass the agent's timeout now denies before-tool calls, in each agent's own format, instead of letting them through.
 
 ### Fixed
 - The hook now reads input that starts with a UTF-8 BOM. Before, such input (Windows PowerShell 5.1 pipes add one) was dropped silently, so a call that should ask got no decision.

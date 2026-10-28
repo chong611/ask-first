@@ -66,7 +66,7 @@ class CheckTest(unittest.TestCase):
             public = check.budget_paths(owners=[])
             self.assertEqual(check.budget_paths(owners=[missing, owner]), public + [owner])
             self.assertEqual(len(check.check_budget(owners=[missing, owner])), 1)
-            self.assertEqual(check.owner_candidates()[-1], Path.home() / ".claude" / "rules" / "owner.md")
+            self.assertEqual(check.owner_candidates()[0], Path.home() / ".claude" / "rules" / "owner.md")  # live first
 
     def test_windows_invalid_paths(self):
         bad = check.portable_path_errors(["as: env override#", "a/b?.md", "docs/CON.md", "x/trail. "])
