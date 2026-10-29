@@ -6,10 +6,11 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
-from tempfile import mkdtemp
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tmpdirs import mkdtemp  # noqa: E402
 import install  # noqa: E402
 
 HOOK = ROOT / "src" / "hooks" / "playbook_hook.py"

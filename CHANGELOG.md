@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions: [Sem
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-29
+
+### Fixed
+- A wildcard path (`C:/*/*/*/x.txt`) checks the time limit before reading each folder, not once per path level, so a slow disk can no longer hold the check past Claude Code's 10-second hook timeout, where the call would run without asking. A check cut short still asks.
+- The tests and `publish_public.py` remove the temp folders they create; each run used to leave about 40 to 90 behind.
+
 ## [1.1.1] - 2026-10-28
 
 ### Fixed

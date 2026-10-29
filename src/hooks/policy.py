@@ -678,6 +678,7 @@ def moved(cwd: str, args: list[str], precise: bool = False) -> list[str | None]:
     return out
 
 
+CHECK_SECONDS = 6  # classify() answers within this (a check cut short asks); Claude Code's hook timeout is 10 s
 BUDGET = {"entries": 20_000, "deadline": float("inf")}  # per classify(): folder entries read, time to answer
 
 
@@ -699,13 +700,13 @@ def hidden_glob(pattern: str) -> list[str] | None:
     found = [drive + "/" if rest.startswith("/") else "."]
     for part in (p for p in rest.split("/") if p):
         found = found[:50]
-        if time.monotonic() > BUDGET["deadline"]:
-            return None
         if not any(ch in part for ch in "*?["):
             found = [os.path.join(f, part) for f in found]
             continue
         nxt = []
         for f in found[:50]:
+            if time.monotonic() > BUDGET["deadline"]:  # before each folder: a slow disk overruns by one listing
+                return None
             names = listing(f)
             BUDGET["entries"] -= len(names) + 1
             if BUDGET["entries"] < 0:
@@ -1310,7 +1311,7 @@ def classify(tool_name: str, tool_input: dict, ctx: Context) -> tuple[str, str]:
     original_self.cache_clear()
     real_step.cache_clear()
     listing.cache_clear()
-    BUDGET.update(entries=20_000, deadline=time.monotonic() + 6)
+    BUDGET.update(entries=20_000, deadline=time.monotonic() + CHECK_SECONDS)
     tool_name = str(tool_name or "")
     if not isinstance(tool_input, dict):
         tool_input = {}

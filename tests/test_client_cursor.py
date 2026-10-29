@@ -22,6 +22,8 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "hooks"
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(SRC))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tmpdirs import mkdtemp  # noqa: E402
 import build  # noqa: E402
 import client_cursor  # noqa: E402
 import install  # noqa: E402
@@ -34,7 +36,7 @@ REPORT = "Done (1)\n- edited a.txt: read it back\nNot done (0)\nUnverified (0)\n
 
 class CursorAdapter(unittest.TestCase):
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp())
+        self.tmp = Path(mkdtemp())
         self.hooks = self.tmp / "hooks"
         self.hooks.mkdir()
         for f in SRC.glob("*.py"):

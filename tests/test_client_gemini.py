@@ -24,6 +24,8 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "hooks"
 sys.path.insert(0, str(SRC))
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tmpdirs import mkdtemp  # noqa: E402
 import build  # noqa: E402
 import client_gemini  # noqa: E402
 import install  # noqa: E402
@@ -45,8 +47,8 @@ def gemini_event(name, cwd, **fields):
 
 class GeminiHookTest(unittest.TestCase):
     def setUp(self):
-        self.home = tempfile.mkdtemp()
-        self.cwd = tempfile.mkdtemp()
+        self.home = mkdtemp()
+        self.cwd = mkdtemp()
         for path in (self.home, self.cwd):
             self.addCleanup(shutil.rmtree, path, True)
         subprocess.run(["git", "init", "-q", self.cwd], check=True, capture_output=True)
@@ -174,7 +176,7 @@ class GeminiHookTest(unittest.TestCase):
 
 class MapToolTest(unittest.TestCase):
     def test_tools_map_to_the_names_and_inputs_the_policy_reads(self):
-        cwd = tempfile.mkdtemp()
+        cwd = mkdtemp()
         self.addCleanup(shutil.rmtree, cwd, True)
         os.mkdir(os.path.join(cwd, "sub"))
         m = client_gemini.map_tool

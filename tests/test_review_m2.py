@@ -1,6 +1,5 @@
 """Regression tests from an independent review of the M2 milestone.
 Each asserts the correct behaviour; all failed against the first M2 commit."""
-import atexit
 import json
 import os
 import shutil
@@ -15,16 +14,11 @@ ROOT = Path(__file__).resolve().parent.parent
 HOOKS = ROOT / "src" / "hooks"
 sys.path.insert(0, str(HOOKS))
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tmpdirs import mkdtemp  # noqa: E402
 import install  # noqa: E402
 import policy  # noqa: E402
 import report  # noqa: E402
-
-
-def mkdtemp() -> str:
-    """A temp folder that is removed when the test run exits, so runs do not pile up folders."""
-    path = tempfile.mkdtemp(prefix="pb-test-")
-    atexit.register(shutil.rmtree, path, True)
-    return path
 
 
 def link_dir(target, link) -> None:

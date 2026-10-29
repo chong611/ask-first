@@ -4,9 +4,10 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
-from tempfile import mkdtemp
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tmpdirs import mkdtemp  # noqa: E402
 import publish_public  # noqa: E402
 
 

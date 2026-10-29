@@ -11,6 +11,8 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tmpdirs import mkdtemp  # noqa: E402
 import build  # noqa: E402
 import install  # noqa: E402
 
@@ -60,7 +62,7 @@ class ProfilesTest(unittest.TestCase):
         self.assertEqual(install.installed_profiles(self.home), ["lang-zh-CN"])
 
     def test_owner_profile_moves_once_and_is_never_overwritten(self):
-        src = Path(tempfile.mkdtemp()) / "profiles"
+        src = Path(mkdtemp()) / "profiles"
         src.mkdir()
         (src / "owner.md").write_text("- Keep replies short.\n", encoding="utf-8")
         with mock.patch.object(install, "OLD_OWNER", src / "owner.md"):

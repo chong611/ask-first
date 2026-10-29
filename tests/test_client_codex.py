@@ -13,13 +13,14 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "hooks"
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tmpdirs import mkdtemp  # noqa: E402
 import build  # noqa: E402
 import install  # noqa: E402
 import target_codex  # noqa: E402
@@ -51,7 +52,7 @@ class CodexHook(unittest.TestCase):
     """playbook_hook.py --client codex run as Codex runs it: a JSON event on stdin, the answer on stdout."""
 
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp())
+        self.tmp = Path(mkdtemp())
         self.hooks = self.tmp / "hooks"
         self.hooks.mkdir()
         for f in SRC.glob("*.py"):
@@ -409,7 +410,7 @@ class CodexTarget(unittest.TestCase):
         {"matcher": "Bash", "hooks": [{"type": "command", "command": "python my_guard.py", "timeout": 5}]}]}}
 
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp())
+        self.tmp = Path(mkdtemp())
         self.home = self.tmp / "home"
         self.codex = self.home / ".codex"
         (self.codex / "rules").mkdir(parents=True)

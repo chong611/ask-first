@@ -708,7 +708,20 @@ class PowerShellWriteTest(unittest.TestCase):
             with self.subTest(c[:40]):
                 start = time.monotonic()
                 self.assertIn(self.cls(c), (policy.ASK, policy.ALLOW))
-                self.assertLess(time.monotonic() - start, 3)
+                # C:/*/*/* reads the real disk on Windows: the hook's own limit, plus one listing that overruns it
+                self.assertLess(time.monotonic() - start, policy.CHECK_SECONDS + 2)
+
+    def test_a_wildcard_stops_reading_folders_at_the_deadline(self):
+        import time
+        from unittest import mock
+        slow = lambda folder: (time.sleep(0.05), tuple(f"d{i}" for i in range(60)))[1]  # noqa: E731
+        self.addCleanup(policy.BUDGET.update, entries=20_000, deadline=float("inf"))
+        with mock.patch.object(policy, "listing", slow):
+            policy.BUDGET.update(entries=10**9, deadline=time.monotonic() + 0.2)
+            start = time.monotonic()
+            found = policy.hidden_glob("/a/*/*/x.txt")  # 1 + 50 folders: 2.5 s if read to the end
+            self.assertIsNone(found)
+            self.assertLess(time.monotonic() - start, 1)
 
     def test_other_checks_keep_their_cd_reading(self):  # fourth review: these asked before the change
         Path(self.cwd, "a.txt").write_text("committed", encoding="utf-8")
